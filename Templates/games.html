@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>{% block title %} {{ game_list['title'] }}{% endblock %} - {{ game_list['platform'] }}</h2>
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Genre</th>
+            <th>progress</th>
+            <th>Last Updated</th>
+        </tr>
+        {% for game in game_list %}
+        <tr>
+            <td>{{ game['title'] }}</td>
+            <td>{{ game['genre'] }}</td>
+            <td>{{ game['status'] }}</td>
+            <td>{{ game['progress'] }}</td>
+            <td>{{ game['last_modified'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
+
