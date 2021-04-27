@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} {{ game['title'] }} - {{ game['platform'] }} {% endblock %}</h1>
+    <h2>{{ game['genre'] }}</h2>
+    <h3>Added: {{ game['added'] }}    Updated: {{ game['last_modified'] }}</h3>
+    {% if game['beaten'] is not NULL %}
+        <h3>Beaten: {{ game['beaten'] }}</h3>
+    {% endif %}
+    {% if game['completed'] is not NULL %}
+        <h3>Completed: {{ game['completed'] }}</h3>
+    {% endif %}
+
+
+{% endblock %}
