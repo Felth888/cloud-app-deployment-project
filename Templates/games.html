@@ -7,15 +7,23 @@
             <th>Title</th>
             <th>Genre</th>
             <th>progress</th>
-            <th>Last Updated</th>
+            <th>Added</th>
         </tr>
         {% for game in game_list %}
         <tr>
             <td>{{ game['title'] }}</td>
-            <td>{{ game['genre'] }}</td>
-            <td>{{ game['status'] }}</td>
+            <td>
+                <a href="{{ url_for('games', filter_type='genre', filter=game['genre']) }}">
+                    {{ game['genre'] }}
+                </a>
+            </td>
+            <td>
+                <a href="{{ url_for('games', filter_type='status', filter=game['status']) }}">
+                {{ game['status'] }}
+                </a>
+            </td>
             <td>{{ game['progress'] }}</td>
-            <td>{{ game['last_modified'] }}</td>
+            <td>{{ game['added'] }}</td>
         </tr>
         {% endfor %}
     </table>

@@ -34,7 +34,7 @@ app.config['SECRET_KEY']
 
 @app.route('/')
 def index():
-    playing = get_games('playing', 'TRUE', 'last_modified')
+    playing = get_games('playing', True, 'last_modified')
     statuses = get_counts('status')
     platforms = get_counts('platform')
 
