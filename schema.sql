@@ -11,7 +11,7 @@ CREATE TABLE games(
     added DATE NOT NULL DEFAULT CURRENT_DATE,
     beaten DATE,
     completed DATE,
-    last_modified DATE NOT NULL DEFAULT CURRENT_DATE);
+    updated DATE NOT NULL DEFAULT CURRENT_DATE);
 
 
 INSERT INTO games (title, genre, platform, progress, status, added)

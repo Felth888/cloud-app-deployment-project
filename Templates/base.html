@@ -1,31 +1,29 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- Required meta tags -->
+      <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+      <style>
+    form {
+        border: 1px solid black;
+        padding: 5px;
+        width: 35%;
+    }
+
+    .form-field {
+        border: none;
+    }
+    </style>
 
     <title>{% block title %} {% endblock %}</title>
   </head>
   <body>
-    <nav class="navbar navbar-expand-md navbar-light bg-light">
-        <a class="navbar-brand" href="{{ url_for('index')}}">Home</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-            <li class="nav-item active">
-                <a class="nav-link" href="{{ url_for('games', filter_type='None', filter='All') }}">Backlog</a>
-            </li>
-            <li>
-                <a class="nav-link" href="#">Stats</a>
-            </li>
-                <li>
-                <a class="nav-link" href="#">Add Game</a>
-            </li>
-            </ul>
-        </div>
+    <nav class="nav-bar">
+        <a class="nav-link" href="{{ url_for('index')}}">Home</a>
+        <a class="nav-link" href="{{ url_for('games', filter_cat='None', filter='All') }}">Backlog</a>
+        <a class="nav-link" href="{{ url_for('new_game') }}">Add Game</a>
     </nav>
     <div class="container">
         {% for message in get_flashed_messages() %}

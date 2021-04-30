@@ -1,6 +1,9 @@
 import sqlite3
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, flash, redirect, render_template, url_for, request
 from werkzeug.exceptions import abort
+from werkzeug.datastructures import MultiDict
+from forms import NewGame, UpdateGame
+from datetime import datetime, date
 import jinja2
 
 def get_db_connection():
@@ -17,13 +20,16 @@ def get_games(filter_cat, filter, order='title'):
     :param order: column to sort the results by
     :return: list of games
     """
-    
+
     conn = get_db_connection()
+    sql = "SELECT * FROM games"
+    if filter != 'All':
+        sql = f"{sql} WHERE %s = ?"
+    sql = f"{sql} ORDER BY %s"
     if filter == 'All':
-        games = conn.execute('SELECT * FROM games ORDER BY title').fetchall()
+        games = conn.execute(sql % (order)).fetchall()
     else:
-        games = conn.execute('SELECT * FROM games WHERE %s=? ORDER BY %s'
-                             % (filter_cat, order),(filter,)).fetchall()
+        games = conn.execute(sql % (filter_cat, order),(filter,)).fetchall()
     conn.close()
 
     return games
@@ -37,7 +43,9 @@ def get_game_detail(game_id):
     """
     
     conn = get_db_connection()
-    game = conn.execute('SELECT * FROM games WHERE id = ?',(game_id,))
+    game = conn.execute("SELECT * "
+                        "FROM games "
+                        "WHERE id = ?",(game_id,)).fetchone()
     conn.close()
 
     if game is None:
@@ -45,21 +53,78 @@ def get_game_detail(game_id):
 
     return game
 
-def get_counts (count_cat):
+def add_game(form):
+    params = []
+    for field in form:
+        if field.data is not None:
+            params.append(field.data)
+    params.pop()
+    params.pop()
+    sql = "INSERT INTO games (title, platform, genre, progress, status," \
+                    " playing, added"
+    if form.beaten.data is not None:
+        sql = f"{sql}, beaten"
+    if form.completed.data is not None:
+        sql = f"{sql}, completed"
+
+    sql = f"{sql}) VALUES (?, ?, ?, ?, ?, " \
+        f"?, ?"
+    if form.beaten.data is not None:
+        sql = f"{sql}, ?"
+    if form.completed.data is not None:
+        sql = f"{sql}, ?"
+    sql = f"{sql})"
+
+    conn = get_db_connection()
+    conn.execute(sql,params)
+    conn.commit()
+    conn.close()
+
+def update_game(form, game_id):
+    params = [date.today()]
+    for field in form:
+        if field.data is not None:
+            params.append(field.data)
+    params.pop()
+    params.pop()
+    params.append(game_id)
+
+    sql = "UPDATE games SET updated = ?, progress = ?, status = ?, playing = ?"
+    if form.beaten.data is not None:
+        sql = f"{sql}, beaten = ?"
+    if form.completed.data is not None:
+        sql = f"{sql}, completed = ?"
+    sql = f"{sql} WHERE id = ?"
+
+    conn = get_db_connection()
+    conn.execute(sql,params)
+    conn.commit()
+    conn.close()
+
+def get_counts (count_cat, count_subcat = None):
     """
     retrieve a count of all titles for the specified category
 
     :param count_cat: the column to aggregate count by in SELECT statement
+    :param count_subcat: the column to sub-aggregate count by in SELECT statement
     :return: information for the count values for the category.
     """
     conn = get_db_connection()
-    counts = conn.execute('SELECT %s, COUNT(title) AS total FROM games GROUP BY %s ORDER BY %s'
-                         % (count_cat, count_cat, count_cat)).fetchall()
-    conn.close()
+    sql = "SELECT %s, COUNT(title) AS total " \
+          "FROM games " \
+          "GROUP BY %s"
+    if count_subcat != None:
+        sql = f"{sql}, %s"
+    sql = f"{sql} ORDER BY %s"
+
+    if count_subcat != None:
+        counts = conn.execute(sql % (count_cat, count_cat, count_subcat, count_cat)).fetchall()
+    else:
+        counts = conn.execute(sql % (count_cat, count_cat, count_cat)).fetchall()
 
     return counts
 
-def backlog_time(game_id = None, stat_cat = None):
+def backlog_times(game_id = None, stat_cat = None):
     """
     calculates the time a game has been in backlog or the average time games of
     a specified category have been in backlog for all games and only current
@@ -72,45 +137,98 @@ def backlog_time(game_id = None, stat_cat = None):
     :return: time in backlog, avg time in backlog for all games, avg time in
              backlog for unplayed and unfinished games.
     """
+    conn = get_db_connection()
+    sql = "CASE " \
+            "WHEN completed IS NOT NULL " \
+                "THEN JULIANDAY(completed) - JULIANDAY(added) " \
+            "WHEN beaten IS NOT NULL " \
+                "THEN JULIANDAY(beaten) - JULIANDAY(added) " \
+            "ELSE JULIANDAY('now') - JULIANDAY(added) " \
+            "END "
 
+    # single game average
+    if game_id is not None:
+        sql = f"SELECT {sql} AS backlog_time FROM games WHERE id=?"
+        game_time = conn.execute(sql,(game_id,)).fetchone()
 
-    
+        conn.close()
+        return game_time
+    # multiple games averages
+    else:
+        sql = f"SELECT AVG({sql}) AS backlog_time FROM games"
+        current_sql = f"{sql} WHERE status IN ('Unplayed', 'Unfinished')"
 
+        avg_total_time = conn.execute(sql).fetchone()
+        avg_current_time = conn.execute(current_sql).fetchone()
+
+        conn.close()
+        return avg_current_time, avg_total_time
 
 app = Flask(__name__)
 app.config.from_object('config')
 app.config['SECRET_KEY']
+app.config['SESSION_COOKIE_SECURE']
 
 @app.route('/')
 def index():
-    playing = get_games('playing', True, 'last_modified')
+    playing = get_games('playing', True, 'updated')
     statuses = get_counts('status')
     platforms = get_counts('platform')
+    current_backlog, total_backlog = backlog_times()
 
     all_games = 0
     for status in statuses:
         all_games += status['total']
 
     return render_template('index.html', playing=playing, statuses=statuses,
-                           platforms=platforms, all_games=all_games)
+                           platforms=platforms, all_games=all_games,
+                           current_backlog=current_backlog,
+                           total_backlog=total_backlog)
 
 @app.route('/<string:filter_cat>/<string:filter>')
 def games(filter_cat, filter):
+    conn = get_db_connection()
     game_list = get_games(filter_cat, filter)
 
     return render_template('games.html', filter_cat=filter_cat, filter=filter,
                            game_list=game_list)
 
-@app.route('/<int:game_id>')
+@app.route('/<int:game_id>', methods=["GET","POST"])
 def game_detail(game_id):
     game = get_game_detail(game_id)
+    game_time = backlog_times(game_id)
 
+    added = datetime.strptime(game['added'], '%Y-%m-%d').date()
 
+    defaults = MultiDict([('progress',game['progress']), ('status', game['status']),
+                          ('playing', game['playing']),('added', added)])
+    if game['beaten'] is not None:
+        defaults.add('beaten', game['beaten'])
+    if game['completed'] is not None:
+        defaults.add('completed', game['completed'])
 
+    if request.method == "GET":
+        form = UpdateGame(formdata=defaults)
+    else:
+        form = UpdateGame()
 
+    if form.validate_on_submit():
+        update_game(form, game_id)
+        return redirect(url_for('game_detail', game_id=game_id, game=game,
+                           game_time=game_time, form=form))
 
+    return render_template('game-detail.html', game_id=game_id, game=game,
+                           game_time=game_time, form=form)
 
+@app.route('/new-game', methods=["GET", "POST"])
+def new_game():
+    form = NewGame()
 
+    if form.validate_on_submit():
+        add_game(form)
+        return redirect(url_for('games', filter_cat='None', filter='All'))
+
+    return render_template('new-game.html', form=form)
 
 if __name__ == "__main__":
     app.run(debug=True)

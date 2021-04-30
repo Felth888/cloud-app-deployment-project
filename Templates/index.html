@@ -13,7 +13,7 @@
        {% for game in playing %}
         <tr>
             <td>
-                <a href="#">
+                <a href="{{ url_for('game_detail', game_id=game['id']) }}">
                 {{ game['title'] }}
                 </a>
             </td>
@@ -23,24 +23,53 @@
         {% endfor %}
     </table>
 
+    <h3>Time in backlog</h3>
+    <table>
+        <tr>
+            <td>Current average time</td>
+            <td>
+            {% if current_backlog['backlog_time'] >= 365 %}
+                {{ (current_backlog['backlog_time']/365)|round(0, 'floor')|int }} years</td>
+            {% elif current_backlog['backlog_time'] >= 30 %}
+                {{ (current_backlog['backlog_time']/30)|round(0, 'floor')|int }} months</td>
+            {% else %}
+                {{ current_backlog['backlog_time']|int }} days</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td>Total average time</td>
+            <td>
+            {% if total_backlog['backlog_time'] >= 365 %}
+                {{ (total_backlog['backlog_time']/365)|round(0, 'floor')|int }} years</td>
+            {% elif total_backlog['backlog_time'] >= 30 %}
+                {{ (total_backlog['backlog_time']/30)|round(0, 'floor')|int }} months</td>
+            {% else %}
+                {{ total_backlog['backlog_time']|int }} days</td>
+            {% endif %}
+            </td>
+        </tr>
+    </table>
+
     <h3>Status</h3>
     <table>
         {% for status in statuses %}
         <tr>
             <td class="name">
-                <a href="{{ url_for('games', filter_type='status', filter=status['status']) }}">
+                <a href="{{ url_for('games', filter_cat='status', filter=status['status']) }}">
                     {{ status['status'] }}
                 </a>
             </td>
-            <td>{{ (status['total']/all_games) * 100 | round(2) }}%</td>
+            <td>{{ ((status['total']/all_games) * 100) | round(2) }}%</td>
         </tr>
         {% endfor %}
     </table>
+
+    <h3>Platforms</h3>
     <table>
         {% for platform in platforms %}
         <tr>
             <td class="name">
-                <a href="{{ url_for('games', filter_type='platform', filter=platform['platform']) }}">
+                <a href="{{ url_for('games', filter_cat='platform', filter=platform['platform']) }}">
                     {{ platform['platform'] }}
                 </a>
             </td>
@@ -49,7 +78,7 @@
         {% endfor %}
         <tr>
             <td class="name">
-                <a href="{{ url_for('games', filter_type='None', filter='All') }}">
+                <a href="{{ url_for('games', filter_cat='None', filter='All') }}">
                     All
                 </a>
             </td>

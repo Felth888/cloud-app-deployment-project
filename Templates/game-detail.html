@@ -3,13 +3,77 @@
 {% block content %}
     <h1>{% block title %} {{ game['title'] }} - {{ game['platform'] }} {% endblock %}</h1>
     <h2>{{ game['genre'] }}</h2>
-    <h3>Added: {{ game['added'] }}    Updated: {{ game['last_modified'] }}</h3>
-    {% if game['beaten'] is not NULL %}
+    <h3>Added: {{ game['added'] }}    Updated: {{ game['updated'] }}</h3>
+    {% if game['beaten'] %}
         <h3>Beaten: {{ game['beaten'] }}</h3>
     {% endif %}
-    {% if game['completed'] is not NULL %}
+    {% if game['completed'] %}
         <h3>Completed: {{ game['completed'] }}</h3>
     {% endif %}
+    <h3>time in backlog:
+    {% if game_time['backlog_time'] >= 365 %}
+        {{ (game_time['backlog_time']/365)|round(0, 'floor')|int }} years</h3>
+    {% elif game_time['backlog_time'] >= 30 %}
+        {{ (game_time['backlog_time']/30)|round(0, 'floor')|int }} months<h3>
+    {% else %}
+        {{ game_time['backlog_time']|int }} days</h3>
+    {% endif %}
 
+    <h2>Game Status</h2>
+    <form method="POST" action="{{ url_for('game_detail', game_id=game['id']) }}">
+        {{ form.hidden_tag() }}
 
+        <fieldset class="form-field" >
+            {{ form.progress.label }}
+            {{ form.progress(size=10)}}
+            {% if form.progress.errors %}
+          <ul class="errors">
+            {% for error in form.progress.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        </fieldset>
+
+        <fieldset class="form-field" >
+            {{ form.status.label }}
+            {% for subfield in form.status %}
+            <tr>
+                <td>{{ subfield }}</td>
+                <td>{{ subfield.label }}</td>
+            </tr>
+            {% endfor %}
+        </fieldset>
+
+        <fieldset class="form-field" >
+            {{ form.playing.label }}
+            {{ form.playing }}
+        </fieldset>
+
+        <fieldset class="form-field" >
+            {{ form.beaten.label }}
+            {{ form.beaten }}
+            {% if form.beaten.errors %}
+          <ul class="errors">
+            {% for error in form.beaten.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        </fieldset>
+
+        <fieldset class="form-field" >
+            {{ form.completed.label }}
+            {{ form.completed }}
+            {% if form.completed.errors %}
+          <ul class="errors" >
+            {% for error in form.completed.errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        </fieldset>
+
+        {{ form.submit }}
+    </form>
 {% endblock %}

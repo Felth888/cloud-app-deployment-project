@@ -1,28 +1,33 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h2>{% block title %} {{ game_list['title'] }}{% endblock %} - {{ game_list['platform'] }}</h2>
+    <h2>Filter: {% block title %} {{ filter }} {% endblock %}</h2>
     <table>
         <tr>
             <th>Title</th>
             <th>Genre</th>
+            <th>Status</th>
             <th>progress</th>
             <th>Added</th>
         </tr>
         {% for game in game_list %}
         <tr>
-            <td>{{ game['title'] }}</td>
             <td>
-                <a href="{{ url_for('games', filter_type='genre', filter=game['genre']) }}">
+                <a href="{{ url_for('game_detail', game_id=game['id']) }}">
+                {{ game['title'] }}
+                </a>
+            </td>
+            <td>
+                <a href="{{ url_for('games', filter_cat='genre', filter=game['genre']) }}">
                     {{ game['genre'] }}
                 </a>
             </td>
             <td>
-                <a href="{{ url_for('games', filter_type='status', filter=game['status']) }}">
+                <a href="{{ url_for('games', filter_cat='status', filter=game['status']) }}">
                 {{ game['status'] }}
                 </a>
             </td>
-            <td>{{ game['progress'] }}</td>
+            <td>{{ game['progress'] }}%</td>
             <td>{{ game['added'] }}</td>
         </tr>
         {% endfor %}
