@@ -199,7 +199,7 @@ def game_detail(game_id):
     game_time = backlog_times(game_id)
 
     defaults = MultiDict([('progress',game['progress']), ('status', game['status']),
-                          ('playing', game['playing']),('added', added)])
+                          ('playing', game['playing'])])
     if game['beaten'] is not None:
         defaults.add('beaten', game['beaten'])
     if game['completed'] is not None:
