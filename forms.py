@@ -22,10 +22,10 @@ def validate_added(form, self):
     if form.added.data > date.today():
         raise ValueError("Date can't be after today")
     if form.completed.data is not None:
-        if form.completed.data > form.added.data:
+        if form.completed.data < form.added.data:
             raise ValueError("Date can't be after date added")
     if form.beaten.data is not None:
-        if form.beaten.data > form.added.data:
+        if form.beaten.data < form.added.data:
             raise ValueError("Date can't be after date added")
 
 
@@ -74,9 +74,9 @@ class NewGame(FlaskForm):
 
     added = DateField('Date Added', [validate_added], default=date.today())
 
-    beaten = DateField('Date Beaten', [optional(), validate_beaten])
+    beaten = DateField('Date Beaten', [optional(), validate_beaten, validate_added])
 
-    completed = DateField('Date Completed', [optional(), validate_completed])
+    completed = DateField('Date Completed', [optional(), validate_completed, validate_added])
 
     submit = SubmitField('Submit')
 

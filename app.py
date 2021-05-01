@@ -198,8 +198,6 @@ def game_detail(game_id):
     game = get_game_detail(game_id)
     game_time = backlog_times(game_id)
 
-    added = datetime.strptime(game['added'], '%Y-%m-%d').date()
-
     defaults = MultiDict([('progress',game['progress']), ('status', game['status']),
                           ('playing', game['playing']),('added', added)])
     if game['beaten'] is not None:
